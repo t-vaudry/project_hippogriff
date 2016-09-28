@@ -1,14 +1,14 @@
-﻿Build started 2016-09-28 3:11:19 PM.
+﻿Build started 2016-09-28 4:32:00 PM.
      1>Project "C:\Users\TJ\Documents\GitHub\project_hippogriff\Assignment1\Assignment1\Assignment1.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D _MBCS /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Fo"Debug\\" /Fd"Debug\vc140.pdb" /Gd /TP /analyze- /errorReport:prompt main.cpp
          main.cpp
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(29): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(64): warning C4305: 'initializing': truncation from 'double' to 'float'
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(74): warning C4305: '-=': truncation from 'double' to 'float'
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(93): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(95): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(96): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(34): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(71): warning C4305: 'initializing': truncation from 'double' to 'GLfloat'
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(81): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(109): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(111): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+     1>c:\users\tj\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(112): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
        Link:
          C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\TJ\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.exe" /INCREMENTAL /NOLOGO /LIBPATH:"C:\Users\TJ\Documents\Visual Studio 2015\Projects\Assignment1\Assignment1\Dependencies\glew" /LIBPATH:"C:\Users\TJ\Documents\Visual Studio 2015\Projects\Assignment1\Assignment1\Dependencies\freeglut" opengl32.lib freeglut.lib glew32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /Debug /PDB:"C:\Users\TJ\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\TJ\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.lib" /MACHINE:X86 Debug\main.obj
          Assignment1.vcxproj -> C:\Users\TJ\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.exe
@@ -16,4 +16,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:01.63
+Time Elapsed 00:00:02.62
