@@ -77,7 +77,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\TJ\Documents\Visual Studio 2015\Projects\Assignment1\Assignment1\Dependencies\glew;C:\Users\TJ\Documents\Visual Studio 2015\Projects\Assignment1\Assignment1\Dependencies\freeglut;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Assignment1\Dependencies\glew;C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Assignment1\Dependencies\freeglut;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;freeglut.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
