@@ -1,8 +1,11 @@
 ﻿  main.cpp
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(32): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(114): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(116): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(117): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(121): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(46): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(121): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(123): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(124): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(128): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(141): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(142): warning C4305: 'argument': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(143): warning C4305: 'argument': truncation from 'double' to 'float'
   Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.exe
   Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.pdb (Full PDB)
