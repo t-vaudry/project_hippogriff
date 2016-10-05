@@ -3,9 +3,8 @@
 #include "Dependencies\glew\glew.h"
 #include "Dependencies\freeglut\freeglut.h"
 #include <stdlib.h>
-#include <vector>
 #include <thread>
-#include "Color.h"
+#include <random>
 
 using namespace std;
 
@@ -17,7 +16,7 @@ using namespace std;
 
 int numOfSpecies;
 bool** species;
-Color color[10] = {};
+float** color = new float*[10];
 
 void glutTimer(int value);
 void display();
@@ -35,21 +34,21 @@ int main(int argc, char** argv)
 	if (numOfSpecies < 5)
 	{
 		cout << "Number of species is less than 5. Default to 5." << endl;
-		numOfSpecies = 5;
+	 	numOfSpecies = 5;
 	}
 	else if (numOfSpecies > 10)
 	{
-		cout << "Number of species is greater than 10. Default to 10." << endl;
-		numOfSpecies = 10;
+	 	cout << "Number of species is greater than 10. Default to 10." << endl;
+	 	numOfSpecies = 10;
 	}
 
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	initializeColor();
 	initializeGrid();
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(WIDTH, HEIGHT);
-	glutInitWindowPosition(50, 50);
+	glutInitWindowPosition(25,25);
 	glutCreateWindow("Game of Life - Multiple Species");
 	glutTimerFunc(33, glutTimer, 1);
 	glutDisplayFunc(display);
@@ -65,14 +64,14 @@ void glutTimer(int value)
 
 void display()
 {
-	vector<thread> threads;
+	thread* threads = new thread[numOfSpecies];
 
 	draw();
 	glutSwapBuffers();
 
 	for (int i = 0; i < numOfSpecies; i++)
 	{
-		threads.push_back(thread(checkConditions, i));
+		threads[i] = thread(checkConditions, i);
 	}
 
 	for (int i = 0; i < numOfSpecies; i++)
@@ -109,9 +108,9 @@ void draw()
 					if (species[k][(i*WIDTH) + j])
 					{
 						factor++;
-						red += color[k].red;
-						blue += color[k].blue;
-						green += color[k].green;
+						red += color[k][0];
+						green += color[k][1];
+						blue += color[k][2];
 					}
 				}
 				if (factor != 0)
@@ -131,16 +130,21 @@ void draw()
 
 void initializeColor()
 {
-	color[0] = Color(1.0,0.0,0.0); //red
-	color[1] = Color(0.0,1.0,0.0); //green
-	color[2] = Color(0.0,0.0,1.0); //blue
-	color[3] = Color(1.0,1.0,0.0); //red-green
-	color[4] = Color(0.0,1.0,1.0); //green-blue
-	color[5] = Color(1.0,0.0,1.0); //red-blue
-	color[6] = Color(1.0,1.0,1.0); //white
-	color[7] = Color(0.5,0.75,0.33); //other
-	color[8] = Color(0.33,0.5,0.75); //other
-	color[9] = Color(0.75,0.33,0.5); //other
+	for (int i = 0; i < 10; i++)
+	{
+		color[i] = new float[3];
+	}
+
+	color[0][0] = 1.0, color[0][1] = 0.0, color[0][2] = 0.0;
+	color[1][0] = 0.0, color[1][1] = 1.0, color[1][2] = 0.0;
+	color[2][0] = 0.0, color[2][1] = 0.0, color[2][2] = 1.0;
+	color[3][0] = 1.0, color[3][1] = 1.0, color[3][2] = 0.0;
+	color[4][0] = 0.0, color[4][1] = 1.0, color[4][2] = 1.0;
+	color[5][0] = 1.0, color[5][1] = 0.0, color[5][2] = 1.0;
+	color[6][0] = 1.0, color[6][1] = 1.0, color[6][2] = 1.0;
+	color[7][0] = 0.5, color[7][1] = 0.75, color[7][2] = 0.33;
+	color[8][0] = 0.33, color[8][1] = 0.5, color[8][2] = 0.75;
+	color[9][0] = 0.75, color[9][1] = 0.33, color[9][2] = 0.5;
 }
 
 void initializeGrid()
@@ -160,12 +164,19 @@ void initializeGrid()
 		}
 	}
 
+	default_random_engine generator;
+	uniform_int_distribution<int> distribution(1, numOfSpecies);
+	uniform_int_distribution<int> state_distribution(0, 1);
+
 	for (int i = 0; i < SIZE; i++)
 	{
-		int type = rand() % numOfSpecies;
+		
+		int type = distribution(generator);
+		//int type = (int)((numOfSpecies-1) * ((double)rand() / (double)RAND_MAX)); //abs(rand()*rand()*rand() + rand()) % numOfSpecies;
+		//int type = rand() % numOfSpecies;
 
-		if (rand() % 2 == 1)
-			species[type][i] = true; //alive
+		if (state_distribution(generator) == 1)
+			species[type-1][i] = true; //alive
 		//else
 			//species[type][i] = false; //dead
 	}
@@ -200,123 +211,55 @@ void checkConditions(int type)
 			species[type][(i*WIDTH) + j] = tmp[(i*WIDTH) + j];
 		}
 	}
+
+	delete tmp;
 }
 
 int count(int i, int j, int type)
 {
 	int count = 0;
 
-	if (i == 0)
+	if (i != 0)
 	{
-		if (j == 0)
-		{
-			if (species[type][i*WIDTH + j + 1])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j + 1])
-				count++;
-		}
-		else if (j == WIDTH - 1)
-		{
-			if (species[type][(i + 1)*WIDTH + j - 1])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j - 1])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j])
-				count++;
-		}
-		else
-		{
-			if (species[type][i*WIDTH + j - 1])
-				count++;
-			if (species[type][i*WIDTH + j + 1])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j - 1])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j])
-				count++;
-			if (species[type][(i + 1)*WIDTH + j + 1])
-				count++;
-		}
-	}
-	else if (i == WIDTH - 1)
-	{
-		if (j == 0)
-		{
-			if (species[type][(i - 1)*WIDTH + j])
-				count++;
-			if (species[type][(i - 1)*WIDTH + j + 1])
-				count++;
-			if (species[type][i*WIDTH + j + 1])
-				count++;
-		}
-		else if (j == WIDTH - 1)
+		if (j != 0)
 		{
 			if (species[type][(i - 1)*WIDTH + j - 1])
 				count++;
-			if (species[type][(i - 1)*WIDTH + j])
-				count++;
-			if (species[type][i*WIDTH + j - 1])
-				count++;
 		}
-		else
+		if (species[type][(i - 1)*WIDTH + j])
+			count++;
+		if (j != WIDTH - 1)
 		{
-			if (species[type][(i - 1)*WIDTH + j - 1])
-				count++;
-			if (species[type][(i - 1)*WIDTH + j])
-				count++;
 			if (species[type][(i - 1)*WIDTH + j + 1])
 				count++;
-			if (species[type][i*WIDTH + j - 1])
+		}
+	}
+
+	if (i != HEIGHT - 1)
+	{
+		if (j != 0)
+		{
+			if (species[type][(i + 1)*WIDTH + j - 1])
 				count++;
-			if (species[type][i*WIDTH + j + 1])
+		}
+		if (species[type][(i + 1)*WIDTH + j])
+			count++;
+		if (j != WIDTH - 1)
+		{
+			if (species[type][(i + 1)*WIDTH + j + 1])
 				count++;
 		}
 	}
-	else if (j == 0)
+
+	if (j != 0)
 	{
-		if (species[type][(i - 1)*WIDTH + j])
-			count++;
-		if (species[type][(i - 1)*WIDTH + j + 1])
-			count++;
-		if (species[type][i*WIDTH + j + 1])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j + 1])
-			count++;
-	}
-	else if (j == WIDTH - 1)
-	{
-		if (species[type][(i - 1)*WIDTH + j - 1])
-			count++;
-		if (species[type][(i - 1)*WIDTH + j])
-			count++;
 		if (species[type][i*WIDTH + j - 1])
 			count++;
-		if (species[type][(i + 1)*WIDTH + j - 1])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j])
-			count++;
 	}
-	else
+
+	if (j != WIDTH - 1)
 	{
-		if (species[type][(i - 1)*WIDTH + j - 1]) //top-left
-			count++;
-		if (species[type][(i - 1)*WIDTH + j])
-			count++;
-		if (species[type][(i - 1)*WIDTH + j + 1])
-			count++;
-		if (species[type][i*WIDTH + j - 1])
-			count++;
 		if (species[type][i*WIDTH + j + 1])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j - 1])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j])
-			count++;
-		if (species[type][(i + 1)*WIDTH + j + 1])
 			count++;
 	}
 

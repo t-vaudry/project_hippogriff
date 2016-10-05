@@ -1,1 +1,13 @@
-﻿LINK : fatal error LNK1104: cannot open file 'freeglut.lib'
+﻿  main.cpp
+main.cpp(120): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(122): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(123): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(127): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+main.cpp(145): warning C4305: '=': truncation from 'double' to 'float'
+main.cpp(146): warning C4305: '=': truncation from 'double' to 'float'
+main.cpp(147): warning C4305: '=': truncation from 'double' to 'float'
+  Generating code
+  All 118 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Release\Assignment1.exe
+  Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Release\Assignment1.pdb (Full PDB)
