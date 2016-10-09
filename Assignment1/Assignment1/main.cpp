@@ -15,15 +15,15 @@ using namespace std;
 #define Y_SIZE 0.002604166 // 2/768
 
 int numOfSpecies;
-bool** species;
 float** color = new float*[10];
-thread* threads;
+thread* compThreads;
+bool** species;
 
 void glutTimer(int value);
-void display();
-void draw();
 void initializeColor();
 void initializeGrid();
+void display();
+void draw();
 void checkConditions(int type);
 int count(int i, int j, int type);
 
@@ -43,21 +43,18 @@ int main(int argc, char** argv)
 	 	numOfSpecies = 10;
 	}
 
-	// Seeding for random at the beginning of execution
-	srand((unsigned int)time(NULL));
-
 	// Initialize the color schemes and initial grid
 	initializeColor();
 	initializeGrid();
 
 	// Initialize threads for computation
-	threads = new thread[numOfSpecies];
+	compThreads = new thread[numOfSpecies];
 
 	// Initialize OpenGL
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
 	glutInitWindowSize(WIDTH, HEIGHT);
-	glutInitWindowPosition(25,25);
+	glutInitWindowPosition(0,0);
 	glutCreateWindow("Game of Life - Multiple Species");
 
 	// Set timer to recall every 33ms for 30FPS
@@ -75,78 +72,6 @@ void glutTimer(int value)
 {
 	glutPostRedisplay();
 	glutTimerFunc(33, glutTimer, 1);
-}
-
-void display()
-{
-	// Call draw function to display grid
-	draw();
-	glutSwapBuffers();
-
-	// Call threads for each species to check conditions
-	for (int i = 0; i < numOfSpecies; i++)
-	{
-		threads[i] = thread(checkConditions, i);
-	}
-
-	for (int i = 0; i < numOfSpecies; i++)
-	{
-		threads[i].join();
-	}
-}
-
-void draw()
-{
-	glClear(GL_COLOR_BUFFER_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_QUADS);
-
-
-	// Variables used to draw each pixel and define color
-	GLfloat x;
-	GLfloat y = 1.0;
-	GLfloat red = 0.0;
-	GLfloat blue = 0.0;
-	GLfloat green = 0.0;
-	float factor;
-
-	for(int i=0; i<HEIGHT; i++)
-	{
-		x = -1.0;
-		for(int j=0; j<WIDTH; j++)
-		{
-			factor = 0.0;
-			red = 0.0;
-			blue = 0.0;
-			green = 0.0;
-
-			glBegin(GL_POLYGON);
-
-				//Choose color
-				for (int k = 0; k < numOfSpecies; k++)
-				{
-					if (species[k][(i*WIDTH) + j])
-					{
-						// Increase the factor based on number of live species on current pixel
-						factor++;
-						red += color[k][0];
-						green += color[k][1];
-						blue += color[k][2];
-					}
-				}
-				if (factor != 0)
-					glColor3f(red / factor, green / factor, blue / factor);
-				else
-					glColor3f(red, blue, green); //black
-				glVertex2f(x, y - Y_SIZE);
-				glVertex2f(x, y);
-				glVertex2f(x + X_SIZE, y);
-				glVertex2f(x + X_SIZE, y - Y_SIZE);
-			glEnd();
-
-			x += X_SIZE;
-		}
-		y -= Y_SIZE;
-	}
 }
 
 void initializeColor()
@@ -193,10 +118,81 @@ void initializeGrid()
 	for (int i = 0; i < SIZE; i++)
 	{
 		int type = distribution(generator); // Species
-		
+
 		if (state_distribution(generator) == 1)
-			species[type-1][i] = true; // Alive
-		//else dead
+			species[type - 1][i] = true; // Alive
+										 //else dead
+	}
+}
+
+void display()
+{
+	// Call draw function to display grid
+	draw();
+	glutSwapBuffers();
+
+	// Call threads for each species to check conditions
+	for (int i = 0; i < numOfSpecies; i++)
+	{
+		compThreads[i] = thread(checkConditions, i);
+	}
+
+	for (int i = 0; i < numOfSpecies; i++)
+	{
+		compThreads[i].join();
+	}
+}
+
+void draw()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_QUADS);
+
+	// Variables used to draw each pixel and define color
+	GLfloat x;
+	GLfloat y = 1.0;
+	GLfloat red = 0.0;
+	GLfloat blue = 0.0;
+	GLfloat green = 0.0;
+	float factor;
+
+	for(int i=0; i<HEIGHT; i++)
+	{
+		x = -1.0;
+		for(int j=0; j<WIDTH; j++)
+		{
+			factor = 0.0;
+			red = 0.0;
+			blue = 0.0;
+			green = 0.0;
+
+			glBegin(GL_POLYGON);
+
+				//Choose color
+				for (int k = 0; k < numOfSpecies; k++)
+				{
+					if (species[k][(i*WIDTH) + j])
+					{
+						// Increase the factor based on number of live species on current pixel
+						factor++;
+						red += color[k][0];
+						green += color[k][1];
+						blue += color[k][2];
+					}
+				}
+				if (factor != 0)
+					glColor3f(red / factor, green / factor, blue / factor);
+				else
+					glColor3f(red, blue, green); //black
+				glVertex2f(x, y - Y_SIZE);
+				glVertex2f(x, y);
+				glVertex2f(x + X_SIZE, y);
+				glVertex2f(x + X_SIZE, y - Y_SIZE);
+			glEnd();
+
+			x += X_SIZE;
+		}
+		y -= Y_SIZE;
 	}
 }
 

@@ -1,10 +1,10 @@
 ﻿  main.cpp
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(120): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(122): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(123): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(127): warning C4305: '-=': truncation from 'double' to 'GLfloat'
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(145): warning C4305: '=': truncation from 'double' to 'float'
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(146): warning C4305: '=': truncation from 'double' to 'float'
-c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(147): warning C4305: '=': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(91): warning C4305: '=': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(92): warning C4305: '=': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(93): warning C4305: '=': truncation from 'double' to 'float'
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(187): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(189): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(190): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment1\assignment1\main.cpp(195): warning C4305: '-=': truncation from 'double' to 'GLfloat'
   Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.exe
   Assignment1.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment1\Debug\Assignment1.pdb (Full PDB)
