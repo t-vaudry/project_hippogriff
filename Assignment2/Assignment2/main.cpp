@@ -7,7 +7,6 @@
 #include "Dependencies\tbb\include\tbb\parallel_for.h"
 #include "Dependencies\tbb\include\tbb\task_scheduler_init.h"
 #include <stdlib.h>
-#include <thread>
 #include <random>
 
 using namespace std;
@@ -21,7 +20,6 @@ using namespace tbb;
 
 int numOfSpecies;
 float** color = new float*[10];
-thread* compThreads;
 bool** species;
 
 void glutTimer(int value);
@@ -56,9 +54,6 @@ int main(int argc, char** argv)
 	initializeColor();
 	initializeGrid();
 
-	// Initialize threads for computation
-	compThreads = new thread[numOfSpecies];
-
 	// Initialize OpenGL
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
@@ -88,7 +83,7 @@ void initializeColor()
 	parallel_for(blocked_range<int>(0, 10), [](const blocked_range<int>& r) {
 		for (int i = r.begin(); i != r.end(); i++)
 			color[i] = new float[3];
-	});
+	}, auto_partitioner());
 
 	color[0][0] = 1.0, color[0][1] = 0.0, color[0][2] = 0.0;
 	color[1][0] = 0.0, color[1][1] = 1.0, color[1][2] = 0.0;
@@ -119,7 +114,7 @@ void initializeGrid()
 				species[i][j] = false;
 			}
 		}
-	});
+	}, auto_partitioner());
 
 	// Random number generation
 	default_random_engine generator;
@@ -145,13 +140,13 @@ void display()
 	// Call threads for each species to check conditions
 	for (int i = 0; i < numOfSpecies; i++)
 	{
-		compThreads[i] = thread(checkConditions, i);
+		checkConditions(i);
 	}
 
-	for (int i = 0; i < numOfSpecies; i++)
-	{
-		compThreads[i].join();
-	}
+	//parallel_for(blocked_range<int>(0, numOfSpecies), [](const blocked_range<int>& r) {
+		//for (int i = r.begin(); i != r.end(); i++)
+			//checkConditions(i);
+	//});
 }
 
 void draw()
