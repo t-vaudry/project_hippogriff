@@ -1,0 +1,9 @@
+﻿  main.cpp
+main.cpp(111): warning C4305: '=': truncation from 'double' to 'float'
+main.cpp(112): warning C4305: '=': truncation from 'double' to 'float'
+main.cpp(113): warning C4305: '=': truncation from 'double' to 'float'
+main.cpp(207): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(209): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(210): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+main.cpp(215): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+LINK : fatal error LNK1104: cannot open file 'freeglut.lib'
