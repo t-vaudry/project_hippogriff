@@ -138,15 +138,15 @@ void display()
 	glutSwapBuffers();
 
 	// Call threads for each species to check conditions
-	for (int i = 0; i < numOfSpecies; i++)
-	{
-		checkConditions(i);
-	}
+	//for (int i = 0; i < numOfSpecies; i++)
+	//{
+		//checkConditions(i);
+	//}
 
-	//parallel_for(blocked_range<int>(0, numOfSpecies), [](const blocked_range<int>& r) {
-		//for (int i = r.begin(); i != r.end(); i++)
-			//checkConditions(i);
-	//});
+	parallel_for(blocked_range<int>(0, numOfSpecies), [](const blocked_range<int>& r) {
+		for (int i = r.begin(); i != r.end(); i++)
+			checkConditions(i);
+	}, auto_partitioner());
 }
 
 void draw()
