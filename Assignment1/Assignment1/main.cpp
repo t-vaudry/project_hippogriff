@@ -17,7 +17,7 @@ using namespace std;
 int numOfSpecies;
 float** color = new float*[10];
 thread* compThreads;
-bool** species;
+bool* species;
 
 void glutTimer(int value);
 void initializeColor();
@@ -25,7 +25,7 @@ void initializeGrid();
 void display();
 void draw();
 void checkConditions(int type);
-int count(int i, int j, int type);
+int countNeighbors(int i, int type);
 
 int main(int argc, char** argv)
 {
@@ -95,19 +95,11 @@ void initializeColor()
 
 void initializeGrid()
 {
-	species = new bool*[numOfSpecies];
+	species = new bool[numOfSpecies*SIZE];
 
-	for (int i = 0; i < numOfSpecies; i++)
+	for (int i = 0; i < numOfSpecies*SIZE; i++)
 	{
-		species[i] = new bool[SIZE];
-	}
-
-	for (int i = 0; i < numOfSpecies; i++)
-	{
-		for (int j = 0; j < SIZE; j++)
-		{
-			species[i][j] = false;
-		}
+		species[i] = false;
 	}
 
 	// Random number generation
@@ -120,7 +112,7 @@ void initializeGrid()
 		int type = distribution(generator); // Species
 
 		if (state_distribution(generator) == 1)
-			species[type - 1][i] = true; // Alive
+			species[i + SIZE*(type-1)] = true; // Alive
 										 //else dead
 	}
 }
@@ -171,7 +163,7 @@ void draw()
 				//Choose color
 				for (int k = 0; k < numOfSpecies; k++)
 				{
-					if (species[k][(i*WIDTH) + j])
+					if (species[k*SIZE + (i*WIDTH) + j])
 					{
 						// Increase the factor based on number of live species on current pixel
 						factor++;
@@ -201,80 +193,74 @@ void checkConditions(int type)
 	int numOfNeighbors = 0;
 	bool* tmp = new bool[SIZE]; // Used for next state
 
-	for (int i = 0; i < HEIGHT; i++)
+	for (int i = 0; i < SIZE; i++)
 	{
-		for (int j = 0; j < WIDTH; j++)
-		{
-			numOfNeighbors = count(i, j, type); // Return number of live neighbors of species type
+		numOfNeighbors = countNeighbors(i, type); // Return number of live neighbors of species type
 			
-			// Rules of game of life for next state
-			if (numOfNeighbors < 2) // Less than 2, underpopulated
-				tmp[(i*WIDTH) + j] = false;
-			else if ((numOfNeighbors == 2)&&(!species[type][(i*WIDTH)+j])) // 2 neighbors, and currently dead, remain dead
-				tmp[(i*WIDTH) + j] = false;
-			else if (numOfNeighbors == 3) // 3 neighbors, revive/remain alive
-				tmp[(i*WIDTH) + j] = true;
-			else if (numOfNeighbors > 3) // More than 3, overpopulated
-				tmp[(i*WIDTH) + j] = false;
-		}
+		// Rules of game of life for next state
+		if (numOfNeighbors < 2) // Less than 2, underpopulated
+			tmp[i] = false;
+		else if ((numOfNeighbors == 2)&&(!species[i + SIZE*type])) // 2 neighbors, and currently dead, remain dead
+			tmp[i] = false;
+		else if (numOfNeighbors == 3) // 3 neighbors, revive/remain alive
+			tmp[i] = true;
+		else if (numOfNeighbors > 3) // More than 3, overpopulated
+			tmp[i] = false;
 	}
 
-	for (int i = 0; i < HEIGHT; i++)
+	for (int i = 0; i < SIZE; i++)
 	{
-		for (int j = 0; j < WIDTH; j++)
-		{
-			species[type][(i*WIDTH) + j] = tmp[(i*WIDTH) + j]; // Set next state
-		}
+		species[i + type*SIZE] = tmp[i]; // Set next state
 	}
 
 	delete tmp;
 }
 
-int count(int i, int j, int type)
+int countNeighbors(int i, int type)
 {
 	int count = 0;
 
-	if (i != 0)
+	if (i >= WIDTH)
 	{
-		if (j != 0)
+		if (i%WIDTH != 0)
 		{
-			if (species[type][(i - 1)*WIDTH + j - 1]) // Top-Left Corner
+			if (species[type*SIZE + i - WIDTH - 1]) // Top-Left Corner
 				count++;
 		}
-		if (species[type][(i - 1)*WIDTH + j]) // Top-Center Edge
+		if (species[type*SIZE + i - WIDTH]) // Top-Center Edge
 			count++;
-		if (j != WIDTH - 1)
+		if (i%WIDTH != WIDTH-1)
 		{
-			if (species[type][(i - 1)*WIDTH + j + 1]) // Top-Right Corner
+			if (species[type*SIZE + i - WIDTH + 1]) // Top-Right Corner
 				count++;
 		}
 	}
 
-	if (i != HEIGHT - 1)
+	if (i < WIDTH*(HEIGHT - 1))
 	{
-		if (j != 0)
+		if (i%WIDTH != 0)
 		{
-			if (species[type][(i + 1)*WIDTH + j - 1]) // Bottom-Left Corner
+			if (species[type*SIZE + i + WIDTH - 1]) // Bottom-Left Corner
 				count++;
 		}
-		if (species[type][(i + 1)*WIDTH + j]) // Bottom-Center Edge
+		if (species[type*SIZE + i + WIDTH]) // Bottom-Center Edge
 			count++;
-		if (j != WIDTH - 1)
+		if (i%WIDTH != WIDTH-1)
 		{
-			if (species[type][(i + 1)*WIDTH + j + 1]) // Bottom-Right Corner
+			if (species[type*SIZE + i + WIDTH + 1]) // Bottom-Right Corner
 				count++;
 		}
 	}
 
-	if (j != 0)
+	if (i%WIDTH != 0)
 	{
-		if (species[type][i*WIDTH + j - 1]) // Middle-Left Edge
+		if (species[type*SIZE + i - 1]) // Middle-Left Edge
 			count++;
 	}
 
-	if (j != WIDTH - 1)
+	if (i%WIDTH != WIDTH-1)
 	{
-		if (species[type][i*WIDTH + j + 1]) // Middle-Right Edge
+		if (species[type*SIZE + i + 1]) // Middle-Right Edge
 			count++;
 	}
 

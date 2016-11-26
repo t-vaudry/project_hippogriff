@@ -2,9 +2,9 @@
 c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(95): warning C4305: '=': truncation from 'double' to 'float'
 c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(96): warning C4305: '=': truncation from 'double' to 'float'
 c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(97): warning C4305: '=': truncation from 'double' to 'float'
-c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(193): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(195): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(196): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
-c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(201): warning C4305: '-=': truncation from 'double' to 'GLfloat'
+c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(185): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(187): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(188): warning C4244: 'argument': conversion from 'double' to 'GLfloat', possible loss of data
+c:\users\thoma\documents\github\project_hippogriff\assignment2\assignment2\main.cpp(193): warning C4305: '-=': truncation from 'double' to 'GLfloat'
   Assignment2.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment2\Debug\Assignment2.exe
   Assignment2.vcxproj -> C:\Users\thoma\Documents\GitHub\project_hippogriff\Assignment2\Debug\Assignment2.pdb (Partial PDB)
