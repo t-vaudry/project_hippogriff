@@ -39,28 +39,27 @@
 
 cl_context context = 0;
 cl_command_queue commandQueue = 0;
-cl_program program1 = 0;
-cl_program program2 = 0;
-cl_program program[2] = { program1, program2 };
+cl_program program[3] = { 0, 0, 0 };
 cl_device_id gpu_device = 0;
-cl_kernel kernel1 = 0;
-cl_kernel kernel2 = 0;
-cl_kernel kernel[2] = { kernel1, kernel2 };
-cl_mem memObjects[2] = { 0, 0 };
+cl_kernel kernel[3] = { 0, 0, 0 };
+cl_mem memObjects[5] = { 0, 0, 0, 0, 0 };
 cl_int errNum;
 cl_event clEvent = 0;
 
 int numOfSpecies;
-float** color = new float*[10];
+float* color = new float[30];
 bool* species;
 bool* tmp;
+float* pixels;
 
 void glutTimer(int value);
 void initializeColor();
 void initializeGrid();
+void initializePixels();
 void keyboard(unsigned char key, int x, int y);
 void display();
 void draw();
+void drawPixels();
 
 using namespace std;
 
@@ -90,7 +89,7 @@ cl_context CreateContext()
 	// a CPU-based context.
 	// get device count
 	cl_uint deviceCount;
-	errNum = clGetDeviceIDs(firstPlatformId, CL_DEVICE_TYPE_ALL, 0, NULL, &deviceCount);
+	errNum = clGetDeviceIDs(firstPlatformId, CL_DEVICE_TYPE_GPU, 0, NULL, &deviceCount);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Failed to count devices." << endl;
@@ -122,7 +121,7 @@ cl_context CreateContext()
 //  Create a command queue on the first device available on the
 //  context
 //
-cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device, int deviceType)
+cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
 {
 	cl_int errNum;
 	cl_device_id *devices;
@@ -156,15 +155,15 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device, in
 	// In this example, we just choose the first available device.  In a
 	// real program, you would likely use all available devices or choose
 	// the highest performance device based on OpenCL device queries
-	commandQueue = clCreateCommandQueue(context, devices[deviceType], 0, NULL);
+	commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
 	if (commandQueue == NULL)
 	{
 		delete[] devices;
-		cerr << "Failed to create commandQueue for device" << deviceType;
+		cerr << "Failed to create commandQueue for device";
 		return NULL;
 	}
 
-	*device = devices[deviceType];
+	*device = devices[0];
 	delete[] devices;
 	return commandQueue;
 }
@@ -220,16 +219,20 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
 //  The kernel takes three arguments: result (output), a (input),
 //  and b (input)
 //
-bool CreateMemObjects(cl_context context, cl_mem memObjects[2])
+bool CreateMemObjects(cl_context context, cl_mem memObjects[5])
 {
 	memObjects[0] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(bool) * SIZE * numOfSpecies, species, NULL);
 	memObjects[1] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(bool) * SIZE * numOfSpecies, tmp, NULL);
-	//memObjects[2] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-		//sizeof(int), &numOfSpecies, NULL);
+	memObjects[2] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+		sizeof(float) * SIZE * 11, pixels, NULL);
+	memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeof(int), &numOfSpecies, NULL);
+	memObjects[4] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		sizeof(float) * 30, color, NULL);
 
-	if (memObjects[0] == NULL || memObjects[1] == NULL)
+	if (memObjects[0] == NULL || memObjects[1] == NULL || memObjects[2] == NULL || memObjects[3] == NULL || memObjects[4] == NULL)
 	{
 		cerr << "Error creating memory objects." << endl;
 		return false;
@@ -242,13 +245,15 @@ bool CreateMemObjects(cl_context context, cl_mem memObjects[2])
 //  Cleanup any created OpenCL resources
 //
 void Cleanup(cl_context context, cl_command_queue commandQueue,
-	cl_program program[2], cl_kernel kernel[2], cl_mem memObjects[2])
+	cl_program program[2], cl_kernel kernel[2], cl_mem memObjects[5])
 {
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		if (memObjects[i] != 0)
 			clReleaseMemObject(memObjects[i]);
-
+	}
+	for (int i = 0; i < 3; i++)
+	{
 		if (kernel != 0)
 			clReleaseKernel(kernel[i]);
 
@@ -300,7 +305,7 @@ int main(int argc, char** argv)
 
 	// Create a command-queue on the first device available
 	// on the created context
-	commandQueue = CreateCommandQueue(context, &gpu_device, 0);
+	commandQueue = CreateCommandQueue(context, &gpu_device);
 	if (commandQueue == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
@@ -318,6 +323,14 @@ int main(int argc, char** argv)
 	// Create OpenCL program from HelloWorld.cl kernel source
 	program[1] = CreateProgram(context, gpu_device, "setState.cl");
 	if (program[1] == NULL)
+	{
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return 1;
+	}
+
+	// Create OpenCL program from HelloWorld.cl kernel source
+	program[2] = CreateProgram(context, gpu_device, "drawPixels.cl");
+	if (program[2] == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
@@ -341,11 +354,21 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	// Create OpenCL kernel
+	kernel[2] = clCreateKernel(program[2], "drawPixels", NULL);
+	if (kernel[2] == NULL)
+	{
+		cerr << "Failed to create kernel 3" << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return 1;
+	}
+
 	// Create memory objects that will be used as arguments to
 	// kernel.  First create host memory arrays that will be
 	// used to store the arguments to the kernel
 	initializeColor();
 	initializeGrid();
+	initializePixels();
 
 	if (!CreateMemObjects(context, memObjects))
 	{
@@ -356,10 +379,9 @@ int main(int argc, char** argv)
 	// Set the kernel arguments (result, a, b)
 	errNum = clSetKernelArg(kernel[0], 0, sizeof(cl_mem), &memObjects[0]);
 	errNum |= clSetKernelArg(kernel[0], 1, sizeof(cl_mem), &memObjects[1]);
-	//errNum |= clSetKernelArg(kernel[0], 2, sizeof(cl_mem), &memObjects[2]);
 	if (errNum != CL_SUCCESS)
 	{
-		cerr << "Error setting kernel arguments." << endl;
+		cerr << "Error setting kernel arguments 1." << endl;
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
 	}
@@ -368,7 +390,18 @@ int main(int argc, char** argv)
 	errNum |= clSetKernelArg(kernel[1], 1, sizeof(cl_mem), &memObjects[1]);
 	if (errNum != CL_SUCCESS)
 	{
-		cerr << "Error setting kernel arguments." << endl;
+		cerr << "Error setting kernel arguments 2." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return 1;
+	}
+
+	errNum = clSetKernelArg(kernel[2], 0, sizeof(cl_mem), &memObjects[2]);
+	errNum |= clSetKernelArg(kernel[2], 1, sizeof(cl_mem), &memObjects[0]);
+	errNum |= clSetKernelArg(kernel[2], 2, sizeof(cl_mem), &memObjects[3]);
+	errNum |= clSetKernelArg(kernel[2], 3, sizeof(cl_mem), &memObjects[4]);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error setting kernel arguments 3." << endl;
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
 	}
@@ -418,9 +451,32 @@ void glutTimer(int value)
 void display()
 {
 	size_t globalWorkSize[1] = { SIZE*numOfSpecies };
+	size_t globalSize[1] = { SIZE };
 	size_t localWorkSize[1] = { 8192 };
 	int size = SIZE*numOfSpecies;
 
+	errNum = clEnqueueNDRangeKernel(commandQueue, kernel[2], 1, NULL,
+		globalSize, NULL,
+		0, NULL, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error queuing kernel for execution 1." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return;
+	}
+
+	// Read the output buffer back to the Host
+	errNum = clEnqueueReadBuffer(commandQueue, memObjects[2], CL_TRUE,
+		0, sizeof(float) * SIZE * 11, (void*)pixels,
+		0, NULL, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error reading result buffer." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return;
+	}
+
+	//drawPixels();
 	draw();
 	glutSwapBuffers();
 
@@ -458,21 +514,16 @@ void display()
 
 void initializeColor()
 {
-	for (int i = 0; i < 10; i++)
-	{
-		color[i] = new float[3];
-	}
-
-	color[0][0] = 1.0, color[0][1] = 0.0, color[0][2] = 0.0;
-	color[1][0] = 0.0, color[1][1] = 1.0, color[1][2] = 0.0;
-	color[2][0] = 0.0, color[2][1] = 0.0, color[2][2] = 1.0;
-	color[3][0] = 1.0, color[3][1] = 1.0, color[3][2] = 0.0;
-	color[4][0] = 0.0, color[4][1] = 1.0, color[4][2] = 1.0;
-	color[5][0] = 1.0, color[5][1] = 0.0, color[5][2] = 1.0;
-	color[6][0] = 1.0, color[6][1] = 1.0, color[6][2] = 1.0;
-	color[7][0] = 0.5, color[7][1] = 0.75, color[7][2] = 0.33;
-	color[8][0] = 0.33, color[8][1] = 0.5, color[8][2] = 0.75;
-	color[9][0] = 0.75, color[9][1] = 0.33, color[9][2] = 0.5;
+	color[0] = 1.0, color[1] = 0.0, color[2] = 0.0;
+	color[3] = 0.0, color[4] = 1.0, color[5] = 0.0;
+	color[6] = 0.0, color[7] = 0.0, color[8] = 1.0;
+	color[9] = 1.0, color[10] = 1.0, color[11] = 0.0;
+	color[12] = 0.0, color[13] = 1.0, color[14] = 1.0;
+	color[15] = 1.0, color[16] = 0.0, color[17] = 1.0;
+	color[18] = 1.0, color[19] = 1.0, color[20] = 1.0;
+	color[21] = 0.5, color[22] = 0.75, color[23] = 0.33;
+	color[24] = 0.33, color[25] = 0.5, color[26] = 0.75;
+	color[27] = 0.75, color[25] = 0.33, color[29] = 0.5;
 }
 
 void initializeGrid()
@@ -501,56 +552,92 @@ void initializeGrid()
 	}
 }
 
-void draw()
+void initializePixels()
 {
-	glClear(GL_COLOR_BUFFER_BIT);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_QUADS);
-
-	// Variables used to draw each pixel and define color
-	GLfloat x;
-	GLfloat y = 1.0;
-	GLfloat red = 0.0;
-	GLfloat blue = 0.0;
-	GLfloat green = 0.0;
-	float factor;
-
+	pixels = new float[SIZE * 11];
+	float x;
+	float y = 1.0;
 	for (int i = 0; i<HEIGHT; i++)
 	{
 		x = -1.0;
 		for (int j = 0; j<WIDTH; j++)
 		{
-			factor = 0.0;
-			red = 0.0;
-			blue = 0.0;
-			green = 0.0;
-
-			glBegin(GL_POLYGON);
-
-			//Choose color
-			for (int k = 0; k < numOfSpecies; k++)
-			{
-				if (species[k*SIZE + i*WIDTH + j])
-				{
-					// Increase the factor based on number of live species on current pixel
-					factor++;
-					red += color[k][0];
-					green += color[k][1];
-					blue += color[k][2];
-				}
-			}
-			if (factor != 0)
-				glColor3f(red / factor, green / factor, blue / factor);
-			else
-				glColor3f(red, blue, green); //black
-			glVertex2f(x, y - Y_SIZE);
-			glVertex2f(x, y);
-			glVertex2f(x + X_SIZE, y);
-			glVertex2f(x + X_SIZE, y - Y_SIZE);
-			glEnd();
+			pixels[11*(i*WIDTH + j)] = x;				//V1 x
+			pixels[11*(i*WIDTH + j) + 1] = y - Y_SIZE;	//V1 y
+			pixels[11*(i*WIDTH + j) + 2] = x;			//V2 x
+			pixels[11*(i*WIDTH + j) + 3] = y;			//V2 y
+			pixels[11*(i*WIDTH + j) + 4] = x + X_SIZE;	//V3 x
+			pixels[11*(i*WIDTH + j) + 5] = y;			//V3 y
+			pixels[11*(i*WIDTH + j) + 6] = x + X_SIZE;	//V4 x
+			pixels[11*(i*WIDTH + j) + 7] = y - Y_SIZE;	//V4 y
+			pixels[11 * (i*WIDTH + j) + 8] = 0.0;		//red
+			pixels[11 * (i*WIDTH + j) + 9] = 0.0;		//green
+			pixels[11 * (i*WIDTH + j) + 10] = 0.0;		//blue
 
 			x += X_SIZE;
 		}
 		y -= Y_SIZE;
+	}
+}
+
+void draw()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_QUADS);
+
+	for (int i = 0; i<HEIGHT; i++)
+	{
+		for (int j = 0; j<WIDTH; j++)
+		{
+			glBegin(GL_POLYGON);
+			glColor3f(pixels[11 * ((i*WIDTH) + j) + 8], pixels[11 * ((i*WIDTH) + j) + 9], pixels[11 * ((i*WIDTH) + j) + 10]);
+			glVertex2f(pixels[11*((i*WIDTH) + j)], pixels[11*((i*WIDTH) + j) + 1]);
+			glVertex2f(pixels[11*((i*WIDTH) + j) + 2], pixels[11*((i*WIDTH) + j) + 3]);
+			glVertex2f(pixels[11*((i*WIDTH) + j) + 4], pixels[11*((i*WIDTH) + j) + 5]);
+			glVertex2f(pixels[11*((i*WIDTH) + j) + 6], pixels[11*((i*WIDTH) + j) + 7]);
+			glEnd();
+		}
+	}
+}
+
+void drawPixels()
+{
+	float factor = 0.0;
+	float red = 0.0;
+	float blue = 0.0;
+	float green = 0.0;
+
+	for (int i = 0; i < SIZE; i++)
+	{
+		factor = 0.0;
+		red = 0.0;
+		blue = 0.0;
+		green = 0.0;
+
+		for (int k = 0; k < numOfSpecies; k++)
+		{
+			if (species[k*SIZE + i])
+			{
+				// Increase the factor based on number of live species on current pixel
+				factor++;
+				red += color[3*k + 0];
+				green += color[3*k + 1];
+				blue += color[3*k + 2];
+			}
+		}
+
+		if (factor != 0)
+		{
+			pixels[11 * i + 8] = red / factor;
+			pixels[11 * i + 9] = green / factor;
+			pixels[11 * i + 10] = blue / factor;
+		}
+		else //black
+		{
+			pixels[11 * i + 8] = red;
+			pixels[11 * i + 9] = green;
+			pixels[11 * i + 10] = blue;
+		}
 	}
 }
 
