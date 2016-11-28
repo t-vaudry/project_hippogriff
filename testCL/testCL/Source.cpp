@@ -43,7 +43,7 @@ cl_program program[3] = { 0, 0, 0 };
 cl_device_id gpu_device = 0;
 cl_device_id cpu_device = 0;
 cl_kernel kernel[3] = { 0, 0, 0 };
-cl_mem memObjects[5] = { 0, 0, 0, 0, 0 };
+cl_mem** memObjects;
 cl_int errNum;
 cl_event clEvents[2] = { 0, 0 };
 
@@ -221,39 +221,44 @@ cl_program CreateProgram(cl_context context, cl_device_id device, const char* fi
 //  The kernel takes three arguments: result (output), a (input),
 //  and b (input)
 //
-bool CreateMemObjects(cl_context context, cl_mem memObjects[5])
+cl_mem** CreateMemObjects(cl_context context, cl_mem** memObjects)
 {
-	memObjects[0] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	memObjects = new cl_mem*[5];
+	for (int i = 0; i < 5; i++)
+		memObjects[i] = new cl_mem();
+
+	*memObjects[0] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(bool) * SIZE * numOfSpecies, species, NULL);
-	memObjects[1] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	*memObjects[1] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(bool) * SIZE * numOfSpecies, tmp, NULL);
-	memObjects[2] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+	*memObjects[2] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(float) * SIZE * 11, pixels, NULL);
-	memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+	*memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		sizeof(int), &numOfSpecies, NULL);
-	memObjects[4] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+	*memObjects[4] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		sizeof(float) * 30, color, NULL);
 
-	if (memObjects[0] == NULL || memObjects[1] == NULL || memObjects[2] == NULL || memObjects[3] == NULL || memObjects[4] == NULL)
+	if (*memObjects[0] == NULL || *memObjects[1] == NULL || *memObjects[2] == NULL || *memObjects[3] == NULL || *memObjects[4] == NULL)
 	{
 		cerr << "Error creating memory objects." << endl;
 		return false;
 	}
 
-	return true;
+	return memObjects;
 }
 
 ///
 //  Cleanup any created OpenCL resources
 //
 void Cleanup(cl_context context, cl_command_queue commandQueue[2],
-	cl_program program[2], cl_kernel kernel[2], cl_mem memObjects[5])
+	cl_program program[3], cl_kernel kernel[3], cl_mem** memObjects)
 {
 	for (int i = 0; i < 5; i++)
 	{
-		if (memObjects[i] != 0)
-			clReleaseMemObject(memObjects[i]);
+		if (*memObjects[i] != 0)
+			clReleaseMemObject(*memObjects[i]);
 	}
+
 	for (int i = 0; i < 3; i++)
 	{
 		if (kernel != 0)
@@ -342,7 +347,7 @@ int main(int argc, char** argv)
 
 	// Create OpenCL program from HelloWorld.cl kernel source
 	program[2] = CreateProgram(context, cpu_device, "drawPixels.cl");
-	if (program[2] == NULL)
+	if (program[1] == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
@@ -381,17 +386,17 @@ int main(int argc, char** argv)
 	initializeColor();
 	initializeGrid();
 	initializePixels();
-	drawPixels();
 
-	if (!CreateMemObjects(context, memObjects))
+	memObjects = CreateMemObjects(context, memObjects);
+	if (memObjects == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
 	}
 
 	// Set the kernel arguments (result, a, b)
-	errNum = clSetKernelArg(kernel[0], 0, sizeof(cl_mem), &memObjects[0]);
-	errNum |= clSetKernelArg(kernel[0], 1, sizeof(cl_mem), &memObjects[1]);
+	errNum = clSetKernelArg(kernel[0], 0, sizeof(cl_mem), memObjects[0]);
+	errNum |= clSetKernelArg(kernel[0], 1, sizeof(cl_mem), memObjects[1]);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Error setting kernel arguments 1." << endl;
@@ -399,19 +404,20 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	errNum = clSetKernelArg(kernel[1], 0, sizeof(cl_mem), &memObjects[0]);
-	errNum |= clSetKernelArg(kernel[1], 1, sizeof(cl_mem), &memObjects[1]);
+	// Set the kernel arguments (result, a, b)
+	errNum = clSetKernelArg(kernel[1], 0, sizeof(cl_mem), memObjects[0]);
+	errNum |= clSetKernelArg(kernel[1], 1, sizeof(cl_mem), memObjects[1]);
 	if (errNum != CL_SUCCESS)
 	{
-		cerr << "Error setting kernel arguments 2." << endl;
+		cerr << "Error setting kernel arguments 1." << endl;
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
 	}
 
-	errNum = clSetKernelArg(kernel[2], 0, sizeof(cl_mem), &memObjects[2]);
-	errNum |= clSetKernelArg(kernel[2], 1, sizeof(cl_mem), &memObjects[0]);
-	errNum |= clSetKernelArg(kernel[2], 2, sizeof(cl_mem), &memObjects[3]);
-	errNum |= clSetKernelArg(kernel[2], 3, sizeof(cl_mem), &memObjects[4]);
+	errNum = clSetKernelArg(kernel[2], 0, sizeof(cl_mem), memObjects[2]);
+	errNum |= clSetKernelArg(kernel[2], 1, sizeof(cl_mem), memObjects[0]);
+	errNum |= clSetKernelArg(kernel[2], 2, sizeof(cl_mem), memObjects[3]);
+	errNum |= clSetKernelArg(kernel[2], 3, sizeof(cl_mem), memObjects[4]);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Error setting kernel arguments 3." << endl;
@@ -468,8 +474,15 @@ void display()
 	size_t localWorkSize[1] = { 8192 };
 	int size = SIZE*numOfSpecies;
 
-	draw();
-	glutSwapBuffers();
+	errNum = clEnqueueNDRangeKernel(commandQueue[0], kernel[0], 1, NULL,
+		globalWorkSize, NULL,
+		0, NULL, &clEvents[1]);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error queuing kernel for execution 1." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return;
+	}
 
 	errNum = clEnqueueNDRangeKernel(commandQueue[1], kernel[2], 1, NULL,
 		globalSize, NULL,
@@ -481,39 +494,18 @@ void display()
 		return;
 	}
 
-	errNum = clEnqueueNDRangeKernel(commandQueue[0], kernel[0], 1, NULL,
-		globalWorkSize, NULL,
-		0, NULL, &clEvents[1]);
-	if (errNum != CL_SUCCESS)
-	{
-		cerr << "Error queuing kernel for execution 1." << endl;
-		Cleanup(context, commandQueue, program, kernel, memObjects);
-		return;
-	}
-
 	errNum = clEnqueueNDRangeKernel(commandQueue[0], kernel[1], 1, NULL,
-		globalWorkSize, NULL,
-		2, clEvents, NULL);
+	globalWorkSize, NULL,
+	2, clEvents, NULL);
 	if (errNum != CL_SUCCESS)
 	{
-		cerr << "Error queuing kernel for execution." << endl;
-		Cleanup(context, commandQueue, program, kernel, memObjects);
-		return;
+	cerr << "Error queuing kernel for execution." << endl;
+	Cleanup(context, commandQueue, program, kernel, memObjects);
+	return;
 	}
 
 	// Read the output buffer back to the Host
-	errNum = clEnqueueReadBuffer(commandQueue[0], memObjects[0], CL_TRUE,
-		0, sizeof(bool) * size, (void*)species,
-		0, NULL, NULL);
-	if (errNum != CL_SUCCESS)
-	{
-		cerr << "Error reading result buffer." << endl;
-		Cleanup(context, commandQueue, program, kernel, memObjects);
-		return;
-	}
-
-	// Read the output buffer back to the Host
-	errNum = clEnqueueReadBuffer(commandQueue[1], memObjects[2], CL_TRUE,
+	errNum = clEnqueueReadBuffer(commandQueue[1], *memObjects[2], CL_TRUE,
 		0, sizeof(float) * SIZE * 11, (void*)pixels,
 		0, NULL, NULL);
 	if (errNum != CL_SUCCESS)
@@ -522,6 +514,9 @@ void display()
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return;
 	}
+
+	draw();
+	glutSwapBuffers();
 }
 
 void initializeColor()
