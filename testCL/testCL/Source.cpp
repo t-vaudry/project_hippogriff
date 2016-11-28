@@ -38,13 +38,14 @@
 #define Y_SIZE 0.002604166 // 2/768
 
 cl_context context = 0;
-cl_command_queue commandQueue = 0;
+cl_command_queue commandQueue[2] = { 0, 0 };
 cl_program program[3] = { 0, 0, 0 };
 cl_device_id gpu_device = 0;
+cl_device_id cpu_device = 0;
 cl_kernel kernel[3] = { 0, 0, 0 };
 cl_mem memObjects[5] = { 0, 0, 0, 0, 0 };
 cl_int errNum;
-cl_event clEvent = 0;
+cl_event clEvents[2] = { 0, 0 };
 
 int numOfSpecies;
 float* color = new float[30];
@@ -89,7 +90,7 @@ cl_context CreateContext()
 	// a CPU-based context.
 	// get device count
 	cl_uint deviceCount;
-	errNum = clGetDeviceIDs(firstPlatformId, CL_DEVICE_TYPE_GPU, 0, NULL, &deviceCount);
+	errNum = clGetDeviceIDs(firstPlatformId, CL_DEVICE_TYPE_ALL, 0, NULL, &deviceCount);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Failed to count devices." << endl;
@@ -114,6 +115,7 @@ cl_context CreateContext()
 		return NULL;
 	}
 
+	delete devices;
 	return context;
 }
 
@@ -121,11 +123,11 @@ cl_context CreateContext()
 //  Create a command queue on the first device available on the
 //  context
 //
-cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
+cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device, int deviceType) // deviceType: 0 = gpu, 1 = cpu
 {
 	cl_int errNum;
 	cl_device_id *devices;
-	cl_command_queue commandQueue = NULL;
+	cl_command_queue tempQueue = NULL;
 	size_t deviceBufferSize = -1;
 
 	// First get the size of the devices buffer
@@ -155,7 +157,7 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
 	// In this example, we just choose the first available device.  In a
 	// real program, you would likely use all available devices or choose
 	// the highest performance device based on OpenCL device queries
-	commandQueue = clCreateCommandQueue(context, devices[0], 0, NULL);
+	tempQueue = clCreateCommandQueue(context, devices[deviceType], 0, NULL);
 	if (commandQueue == NULL)
 	{
 		delete[] devices;
@@ -163,9 +165,9 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device)
 		return NULL;
 	}
 
-	*device = devices[0];
+	*device = devices[deviceType];
 	delete[] devices;
-	return commandQueue;
+	return tempQueue;
 }
 
 ///
@@ -244,7 +246,7 @@ bool CreateMemObjects(cl_context context, cl_mem memObjects[5])
 ///
 //  Cleanup any created OpenCL resources
 //
-void Cleanup(cl_context context, cl_command_queue commandQueue,
+void Cleanup(cl_context context, cl_command_queue commandQueue[2],
 	cl_program program[2], cl_kernel kernel[2], cl_mem memObjects[5])
 {
 	for (int i = 0; i < 5; i++)
@@ -260,9 +262,12 @@ void Cleanup(cl_context context, cl_command_queue commandQueue,
 		if (program != 0)
 			clReleaseProgram(program[i]);
 	}
-
-	if (commandQueue != 0)
-		clReleaseCommandQueue(commandQueue);
+	
+	for (int i = 0; i < 2; i++)
+	{
+		if (commandQueue[i] != 0)
+			clReleaseCommandQueue(commandQueue[i]);
+	}
 
 	if (context != 0)
 		clReleaseContext(context);
@@ -305,8 +310,15 @@ int main(int argc, char** argv)
 
 	// Create a command-queue on the first device available
 	// on the created context
-	commandQueue = CreateCommandQueue(context, &gpu_device);
-	if (commandQueue == NULL)
+	commandQueue[0] = CreateCommandQueue(context, &gpu_device, 0);
+	if (commandQueue[0] == NULL)
+	{
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return 1;
+	}
+
+	commandQueue[1] = CreateCommandQueue(context, &cpu_device, 1);
+	if (commandQueue[1] == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
@@ -329,7 +341,7 @@ int main(int argc, char** argv)
 	}
 
 	// Create OpenCL program from HelloWorld.cl kernel source
-	program[2] = CreateProgram(context, gpu_device, "drawPixels.cl");
+	program[2] = CreateProgram(context, cpu_device, "drawPixels.cl");
 	if (program[2] == NULL)
 	{
 		Cleanup(context, commandQueue, program, kernel, memObjects);
@@ -369,6 +381,7 @@ int main(int argc, char** argv)
 	initializeColor();
 	initializeGrid();
 	initializePixels();
+	drawPixels();
 
 	if (!CreateMemObjects(context, memObjects))
 	{
@@ -455,34 +468,12 @@ void display()
 	size_t localWorkSize[1] = { 8192 };
 	int size = SIZE*numOfSpecies;
 
-	errNum = clEnqueueNDRangeKernel(commandQueue, kernel[2], 1, NULL,
-		globalSize, NULL,
-		0, NULL, NULL);
-	if (errNum != CL_SUCCESS)
-	{
-		cerr << "Error queuing kernel for execution 1." << endl;
-		Cleanup(context, commandQueue, program, kernel, memObjects);
-		return;
-	}
-
-	// Read the output buffer back to the Host
-	errNum = clEnqueueReadBuffer(commandQueue, memObjects[2], CL_TRUE,
-		0, sizeof(float) * SIZE * 11, (void*)pixels,
-		0, NULL, NULL);
-	if (errNum != CL_SUCCESS)
-	{
-		cerr << "Error reading result buffer." << endl;
-		Cleanup(context, commandQueue, program, kernel, memObjects);
-		return;
-	}
-
-	//drawPixels();
 	draw();
 	glutSwapBuffers();
 
-	errNum = clEnqueueNDRangeKernel(commandQueue, kernel[0], 1, NULL,
-		globalWorkSize, NULL,
-		0, NULL, &clEvent);
+	errNum = clEnqueueNDRangeKernel(commandQueue[1], kernel[2], 1, NULL,
+		globalSize, NULL,
+		0, NULL, &clEvents[0]);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Error queuing kernel for execution 1." << endl;
@@ -490,9 +481,19 @@ void display()
 		return;
 	}
 
-	errNum = clEnqueueNDRangeKernel(commandQueue, kernel[1], 1, NULL,
+	errNum = clEnqueueNDRangeKernel(commandQueue[0], kernel[0], 1, NULL,
 		globalWorkSize, NULL,
-		1, &clEvent, NULL);
+		0, NULL, &clEvents[1]);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error queuing kernel for execution 1." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return;
+	}
+
+	errNum = clEnqueueNDRangeKernel(commandQueue[0], kernel[1], 1, NULL,
+		globalWorkSize, NULL,
+		2, clEvents, NULL);
 	if (errNum != CL_SUCCESS)
 	{
 		cerr << "Error queuing kernel for execution." << endl;
@@ -501,8 +502,19 @@ void display()
 	}
 
 	// Read the output buffer back to the Host
-	errNum = clEnqueueReadBuffer(commandQueue, memObjects[0], CL_TRUE,
+	errNum = clEnqueueReadBuffer(commandQueue[0], memObjects[0], CL_TRUE,
 		0, sizeof(bool) * size, (void*)species,
+		0, NULL, NULL);
+	if (errNum != CL_SUCCESS)
+	{
+		cerr << "Error reading result buffer." << endl;
+		Cleanup(context, commandQueue, program, kernel, memObjects);
+		return;
+	}
+
+	// Read the output buffer back to the Host
+	errNum = clEnqueueReadBuffer(commandQueue[1], memObjects[2], CL_TRUE,
+		0, sizeof(float) * SIZE * 11, (void*)pixels,
 		0, NULL, NULL);
 	if (errNum != CL_SUCCESS)
 	{
@@ -585,18 +597,15 @@ void draw()
 	glClear(GL_COLOR_BUFFER_BIT);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_QUADS);
 
-	for (int i = 0; i<HEIGHT; i++)
+	for (int i = 0; i<SIZE; i++)
 	{
-		for (int j = 0; j<WIDTH; j++)
-		{
-			glBegin(GL_POLYGON);
-			glColor3f(pixels[11 * ((i*WIDTH) + j) + 8], pixels[11 * ((i*WIDTH) + j) + 9], pixels[11 * ((i*WIDTH) + j) + 10]);
-			glVertex2f(pixels[11*((i*WIDTH) + j)], pixels[11*((i*WIDTH) + j) + 1]);
-			glVertex2f(pixels[11*((i*WIDTH) + j) + 2], pixels[11*((i*WIDTH) + j) + 3]);
-			glVertex2f(pixels[11*((i*WIDTH) + j) + 4], pixels[11*((i*WIDTH) + j) + 5]);
-			glVertex2f(pixels[11*((i*WIDTH) + j) + 6], pixels[11*((i*WIDTH) + j) + 7]);
-			glEnd();
-		}
+		glBegin(GL_POLYGON);
+			glColor3f(pixels[11*i + 8], pixels[11*i + 9], pixels[11*i + 10]);
+			glVertex2f(pixels[11*i], pixels[11*i + 1]);
+			glVertex2f(pixels[11*i + 2], pixels[11*i + 3]);
+			glVertex2f(pixels[11*i + 4], pixels[11*i + 5]);
+			glVertex2f(pixels[11*i + 6], pixels[11*i + 7]);
+		glEnd();
 	}
 }
 
@@ -640,7 +649,3 @@ void drawPixels()
 		}
 	}
 }
-
-
-
-
