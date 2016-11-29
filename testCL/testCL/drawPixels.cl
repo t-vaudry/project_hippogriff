@@ -1,4 +1,4 @@
-__kernel void drawPixels(__global float* pixels, __global bool* species, __global int* numOfSpecies, __global float* color)
+__kernel void drawPixels(__global float* colors, __global bool* species, __global int* numOfSpecies, __global float* color)
 {
 	int gid = get_global_id(0);
 	int SIZE = 786432;
@@ -21,14 +21,14 @@ __kernel void drawPixels(__global float* pixels, __global bool* species, __globa
 
 	if(factor != 0)
 	{
-		pixels[11*gid + 8] = red/factor;
-		pixels[11*gid + 9] = green/factor;
-		pixels[11*gid + 10] = blue/factor;
+		colors[3*gid] = red/factor;
+		colors[3*gid + 1] = green/factor;
+		colors[3*gid + 2] = blue/factor;
 	}
 	else //black
 	{
-		pixels[11*gid + 8] = red;
-		pixels[11*gid + 9] = green;
-		pixels[11*gid + 10] = blue;
-	}	
+		colors[3*gid] = red;
+		colors[3*gid + 1] = green;
+		colors[3*gid + 2] = blue;
+	}
 }

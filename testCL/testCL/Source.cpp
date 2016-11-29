@@ -52,6 +52,7 @@ float* color = new float[30];
 bool* species;
 bool* tmp;
 float* pixels;
+float* colors;
 
 void glutTimer(int value);
 void initializeColor();
@@ -232,7 +233,7 @@ cl_mem** CreateMemObjects(cl_context context, cl_mem** memObjects)
 	*memObjects[1] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 		sizeof(bool) * SIZE * numOfSpecies, tmp, NULL);
 	*memObjects[2] = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
-		sizeof(float) * SIZE * 11, pixels, NULL);
+		sizeof(float) * SIZE * 3, colors, NULL);
 	*memObjects[3] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 		sizeof(int), &numOfSpecies, NULL);
 	*memObjects[4] = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
@@ -506,7 +507,7 @@ void display()
 
 	// Read the output buffer back to the Host
 	errNum = clEnqueueReadBuffer(commandQueue[1], *memObjects[2], CL_TRUE,
-		0, sizeof(float) * SIZE * 11, (void*)pixels,
+		0, sizeof(float) * SIZE * 3, (void*)colors,
 		0, NULL, NULL);
 	if (errNum != CL_SUCCESS)
 	{
@@ -561,7 +562,8 @@ void initializeGrid()
 
 void initializePixels()
 {
-	pixels = new float[SIZE * 11];
+	pixels = new float[SIZE * 8];
+	colors = new float[SIZE * 3];
 	float x;
 	float y = 1.0;
 	for (int i = 0; i<HEIGHT; i++)
@@ -569,17 +571,17 @@ void initializePixels()
 		x = -1.0;
 		for (int j = 0; j<WIDTH; j++)
 		{
-			pixels[11*(i*WIDTH + j)] = x;				//V1 x
-			pixels[11*(i*WIDTH + j) + 1] = y - Y_SIZE;	//V1 y
-			pixels[11*(i*WIDTH + j) + 2] = x;			//V2 x
-			pixels[11*(i*WIDTH + j) + 3] = y;			//V2 y
-			pixels[11*(i*WIDTH + j) + 4] = x + X_SIZE;	//V3 x
-			pixels[11*(i*WIDTH + j) + 5] = y;			//V3 y
-			pixels[11*(i*WIDTH + j) + 6] = x + X_SIZE;	//V4 x
-			pixels[11*(i*WIDTH + j) + 7] = y - Y_SIZE;	//V4 y
-			pixels[11 * (i*WIDTH + j) + 8] = 0.0;		//red
-			pixels[11 * (i*WIDTH + j) + 9] = 0.0;		//green
-			pixels[11 * (i*WIDTH + j) + 10] = 0.0;		//blue
+			pixels[8*(i*WIDTH + j)] = x;				//V1 x
+			pixels[8*(i*WIDTH + j) + 1] = y - Y_SIZE;	//V1 y
+			pixels[8*(i*WIDTH + j) + 2] = x;			//V2 x
+			pixels[8*(i*WIDTH + j) + 3] = y;			//V2 y
+			pixels[8*(i*WIDTH + j) + 4] = x + X_SIZE;	//V3 x
+			pixels[8*(i*WIDTH + j) + 5] = y;			//V3 y
+			pixels[8*(i*WIDTH + j) + 6] = x + X_SIZE;	//V4 x
+			pixels[8*(i*WIDTH + j) + 7] = y - Y_SIZE;	//V4 y
+			colors[3 * (i*WIDTH + j)] = 0.0;		//red
+			colors[3 * (i*WIDTH + j) + 1] = 0.0;		//green
+			colors[3 * (i*WIDTH + j) + 2] = 0.0;		//blue
 
 			x += X_SIZE;
 		}
@@ -595,52 +597,11 @@ void draw()
 	for (int i = 0; i<SIZE; i++)
 	{
 		glBegin(GL_POLYGON);
-			glColor3f(pixels[11*i + 8], pixels[11*i + 9], pixels[11*i + 10]);
-			glVertex2f(pixels[11*i], pixels[11*i + 1]);
-			glVertex2f(pixels[11*i + 2], pixels[11*i + 3]);
-			glVertex2f(pixels[11*i + 4], pixels[11*i + 5]);
-			glVertex2f(pixels[11*i + 6], pixels[11*i + 7]);
+			glColor3f(colors[3*i], colors[3*i + 1], colors[3*i + 2]);
+			glVertex2f(pixels[8*i], pixels[8*i + 1]);
+			glVertex2f(pixels[8*i + 2], pixels[8*i + 3]);
+			glVertex2f(pixels[8*i + 4], pixels[8*i + 5]);
+			glVertex2f(pixels[8*i + 6], pixels[8*i + 7]);
 		glEnd();
-	}
-}
-
-void drawPixels()
-{
-	float factor = 0.0;
-	float red = 0.0;
-	float blue = 0.0;
-	float green = 0.0;
-
-	for (int i = 0; i < SIZE; i++)
-	{
-		factor = 0.0;
-		red = 0.0;
-		blue = 0.0;
-		green = 0.0;
-
-		for (int k = 0; k < numOfSpecies; k++)
-		{
-			if (species[k*SIZE + i])
-			{
-				// Increase the factor based on number of live species on current pixel
-				factor++;
-				red += color[3*k + 0];
-				green += color[3*k + 1];
-				blue += color[3*k + 2];
-			}
-		}
-
-		if (factor != 0)
-		{
-			pixels[11 * i + 8] = red / factor;
-			pixels[11 * i + 9] = green / factor;
-			pixels[11 * i + 10] = blue / factor;
-		}
-		else //black
-		{
-			pixels[11 * i + 8] = red;
-			pixels[11 * i + 9] = green;
-			pixels[11 * i + 10] = blue;
-		}
 	}
 }
