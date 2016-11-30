@@ -61,7 +61,6 @@ void initializePixels();
 void keyboard(unsigned char key, int x, int y);
 void display();
 void draw();
-void drawPixels();
 
 using namespace std;
 
@@ -556,7 +555,7 @@ void initializeGrid()
 
 		if (state_distribution(generator) == 1)
 			species[(type - 1)*SIZE + i] = true; // Alive
-												 //else dead
+		//else dead
 	}
 }
 
@@ -579,7 +578,7 @@ void initializePixels()
 			pixels[8*(i*WIDTH + j) + 5] = y;			//V3 y
 			pixels[8*(i*WIDTH + j) + 6] = x + X_SIZE;	//V4 x
 			pixels[8*(i*WIDTH + j) + 7] = y - Y_SIZE;	//V4 y
-			colors[3 * (i*WIDTH + j)] = 0.0;		//red
+			colors[3 * (i*WIDTH + j)] = 0.0;			//red
 			colors[3 * (i*WIDTH + j) + 1] = 0.0;		//green
 			colors[3 * (i*WIDTH + j) + 2] = 0.0;		//blue
 
