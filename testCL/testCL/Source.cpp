@@ -1,18 +1,3 @@
-//
-// Book:      OpenCL(R) Programming Guide
-// Authors:   Aaftab Munshi, Benedict Gaster, Timothy Mattson, James Fung, Dan Ginsburg
-// ISBN-10:   0-321-74964-2
-// ISBN-13:   978-0-321-74964-2
-// Publisher: Addison-Wesley Professional
-// URLs:      http://safari.informit.com/9780132488006/
-//            http://www.openclprogrammingguide.com
-//
-
-// HelloWorld.cpp
-//
-//    This is a simple example that demonstrates basic OpenCL setup and
-//    use.
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -154,9 +139,6 @@ cl_command_queue CreateCommandQueue(cl_context context, cl_device_id *device, in
 		return NULL;
 	}
 
-	// In this example, we just choose the first available device.  In a
-	// real program, you would likely use all available devices or choose
-	// the highest performance device based on OpenCL device queries
 	tempQueue = clCreateCommandQueue(context, devices[deviceType], 0, NULL);
 	if (commandQueue == NULL)
 	{
@@ -276,12 +258,10 @@ void Cleanup(cl_context context, cl_command_queue commandQueue[2],
 
 	if (context != 0)
 		clReleaseContext(context);
-
-	//system("pause");
 }
 
 ///
-//	main() for HelloWorld example
+//	main() for game of life
 //
 int main(int argc, char** argv)
 {
@@ -380,13 +360,13 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	// Create memory objects that will be used as arguments to
-	// kernel.  First create host memory arrays that will be
-	// used to store the arguments to the kernel
 	initializeColor();
 	initializeGrid();
 	initializePixels();
 
+	// Create memory objects that will be used as arguments to
+	// kernel.  First create host memory arrays that will be
+	// used to store the arguments to the kernel
 	memObjects = CreateMemObjects(context, memObjects);
 	if (memObjects == NULL)
 	{
@@ -424,19 +404,6 @@ int main(int argc, char** argv)
 		Cleanup(context, commandQueue, program, kernel, memObjects);
 		return 1;
 	}
-
-	/*size_t wg_size;
-	errNum = clGetKernelWorkGroupInfo(kernel[0], gpu_device, CL_KERNEL_WORK_GROUP_SIZE,
-		sizeof(wg_size), &wg_size, NULL);
-
-	size_t multiple;
-	errNum = clGetKernelWorkGroupInfo(kernel[0], gpu_device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(multiple), &multiple, NULL);
-
-	size_t device_size;
-	errNum = clGetDeviceInfo(gpu_device, CL_DEVICE_ADDRESS_BITS, sizeof(size_t), &device_size, NULL);
-
-	size_t max_work_group_size;
-	errNum = clGetDeviceInfo(gpu_device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t), &max_work_group_size, NULL);*/
 
 	// Set timer to recall every 33ms for 30FPS
 	glutTimerFunc(1, glutTimer, 1);
